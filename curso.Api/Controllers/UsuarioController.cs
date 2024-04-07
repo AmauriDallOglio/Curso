@@ -1,11 +1,12 @@
 ﻿using curso.Api.Business.Entities;
 using curso.Api.Business.Repositories;
 using curso.Api.Filters;
+using curso.Api.Infra.Data;
 using curso.Api.Models;
 using curso.Api.Models.Usuarios;
 using curso.Api.Services;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace curso.Api.Controllers
@@ -17,9 +18,7 @@ namespace curso.Api.Controllers
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IAuthenticationServices _authenticationService;
 
-        public UsuarioController(
-            IUsuarioRepository usuarioRepository,
-            IAuthenticationServices authenticationService)
+        public UsuarioController(IUsuarioRepository usuarioRepository, IAuthenticationServices authenticationService)
         {
             _usuarioRepository = usuarioRepository;
             _authenticationService = authenticationService;
@@ -37,6 +36,7 @@ namespace curso.Api.Controllers
         [ValidacaoModelStateCustomizado]
         public IActionResult Logar()
         {
+
             var usuario = new UsuarioViewModelOutPut
             {
                 Codigo = 1,
@@ -51,6 +51,28 @@ namespace curso.Api.Controllers
                 Token = token,
                 Usuario = usuario
             });
+
+
+            //var usuario = _usuarioRepository.ObterUsuario(loginViewModelInput.Login);
+            //if (usuario == null)
+            //{
+            //    return BadRequest("Usuário não localizado!");
+            //}
+
+            //var usuarioViewModelOutPut = new UsuarioViewModelOutPut()
+            //{
+            //    Codigo = usuario.Codigo,
+            //    Login = usuario.Login,
+            //    Email = usuario.Email
+            //};
+
+            //var token = _authenticationService.GerarToken(usuarioViewModelOutPut);
+
+            //return Ok(new
+            //{
+            //    Token = token,
+            //    Usuario = usuario
+            //});
         }
 
         /// <summary>
@@ -66,6 +88,15 @@ namespace curso.Api.Controllers
         [ValidacaoModelStateCustomizado]
         public IActionResult Registrar(RegistroViewModelInput registro)
         {
+            var optionsBuilder = new DbContextOptionsBuilder<CursoDbContext>();
+            optionsBuilder.UseSqlServer("Server=SERVER;Database=Curso;Trusted_Connection=True;Encrypt=False");
+            CursoDbContext contexto = new CursoDbContext(optionsBuilder.Options);
+            var migracoesPendentes = contexto.Database.GetPendingMigrations();
+            if (migracoesPendentes.Count() > 0 )
+            {
+                contexto.Database.Migrate();
+            }
+
             var usuario = new Usuario
             {
                 Login = registro.Login,
