@@ -15,25 +15,24 @@ namespace curso.Api.Services
             _configuration = configuration;
         }
 
-        public string GerarToken(UsuarioViewModelOutPut usuarioViewModelOut)
+        public string GerarToken(UsuarioViewModelOutPut usuarioViewModelOutput)
         {
-            var secret = Encoding.ASCII.GetBytes(_configuration.GetSection("JwTConfigurations:Secret").Value);
+            var secret = Encoding.ASCII.GetBytes(_configuration.GetSection("JwtConfigurations:Secret").Value);
             var symmetricSecurityKey = new SymmetricSecurityKey(secret);
             var securityTokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new Claim(ClaimTypes.NameIdentifier, usuarioViewModelOut.Codigo.ToString()),
-                    new Claim(ClaimTypes.Name, usuarioViewModelOut.Login),
-                    new Claim(ClaimTypes.Email, usuarioViewModelOut.Email)
+                    new Claim(ClaimTypes.NameIdentifier, usuarioViewModelOutput.Codigo.ToString()),
+                    new Claim(ClaimTypes.Name, usuarioViewModelOutput.Login.ToString()),
+                    new Claim(ClaimTypes.Email, usuarioViewModelOutput.Email.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddDays(1),
                 SigningCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature)
             };
-
             var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-            var tokenGenerate = jwtSecurityTokenHandler.CreateToken(securityTokenDescriptor);
-            var token = jwtSecurityTokenHandler.WriteToken(tokenGenerate);
+            var tokenGenerated = jwtSecurityTokenHandler.CreateToken(securityTokenDescriptor);
+            var token = jwtSecurityTokenHandler.WriteToken(tokenGenerated);
 
             return token;
         }

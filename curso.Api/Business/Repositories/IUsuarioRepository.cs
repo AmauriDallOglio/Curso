@@ -5,7 +5,7 @@ namespace curso.Api.Business.Repositories
     public interface IUsuarioRepository
     {
         void Adicionar(Usuario usuario);
-        Usuario ObterUsuario(string login);
+        Task<Usuario> ObterUsuarioAsync(string login);
         void Commit();
     }
 }

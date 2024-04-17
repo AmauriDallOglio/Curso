@@ -7,6 +7,7 @@ using curso.Api.Models.Usuarios;
 using curso.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace curso.Api.Controllers
@@ -15,11 +16,13 @@ namespace curso.Api.Controllers
     [ApiController]
     public class UsuarioController : ControllerBase
     {
+        private readonly ILogger<UsuarioController> _logger;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IAuthenticationServices _authenticationService;
 
-        public UsuarioController(IUsuarioRepository usuarioRepository, IAuthenticationServices authenticationService)
+        public UsuarioController(ILogger<UsuarioController> logger, IUsuarioRepository usuarioRepository, IAuthenticationServices authenticationService)
         {
+            _logger = logger;
             _usuarioRepository = usuarioRepository;
             _authenticationService = authenticationService;
         }
@@ -32,9 +35,9 @@ namespace curso.Api.Controllers
         [SwaggerResponse(statusCode: 400, description: "Campos obrigatórios", Type = typeof(ValidaCampoViewModelOutPut))]
         [SwaggerResponse(statusCode: 500, description: "Sucesso ao autenticar", Type = typeof(ErroGenericoViewModel))]
         [HttpGet]
-        [Route("logar")]
+        [Route("LogarTeste")]
         [ValidacaoModelStateCustomizado]
-        public IActionResult Logar()
+        public IActionResult LogarTeste()
         {
 
             var usuario = new UsuarioViewModelOutPut
@@ -75,6 +78,55 @@ namespace curso.Api.Controllers
             //});
         }
 
+
+
+
+        [SwaggerResponse(statusCode: 200, description: "Sucesso ao autenticar", Type = typeof(LoginViewModelOutput))]
+        [SwaggerResponse(statusCode: 400, description: "Campos obrigatórios", Type = typeof(ValidaCampoViewModelOutPut))]
+        [SwaggerResponse(statusCode: 500, description: "Erro interno", Type = typeof(ErroGenericoViewModel))]
+
+        [HttpPost]
+        [Route("Logar")]
+        [ValidacaoModelStateCustomizado]
+        public async Task<IActionResult> Logar(LoginViewModelInput loginViewModelInput)
+        {
+            try
+            {
+                var usuario = await _usuarioRepository.ObterUsuarioAsync(loginViewModelInput.Login);
+
+                if (usuario == null)
+                {
+                    return BadRequest("Houve um erro ao tentar acessar.");
+                }
+
+                //if (usuario.Senha != loginViewModel.Senha.GerarSenhaCriptografada())
+                //{
+                //    return BadRequest("Houve um erro ao tentar acessar.");
+                //}
+
+                var usuarioViewModelOutput = new UsuarioViewModelOutPut()
+                {
+                    Codigo = usuario.Codigo,
+                    Login = loginViewModelInput.Login,
+                    Email = usuario.Email
+                };
+
+                var token = _authenticationService.GerarToken(usuarioViewModelOutput);
+
+                return Ok(new LoginViewModelOutput
+                {
+                    Token = token,
+                    Usuario = usuarioViewModelOutput
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return new StatusCodeResult(500);
+            }
+        }
+
+
         /// <summary>
         /// Rota que permite Registrar um usuário 
         /// </summary>
@@ -91,11 +143,11 @@ namespace curso.Api.Controllers
             var optionsBuilder = new DbContextOptionsBuilder<CursoDbContext>();
             optionsBuilder.UseSqlServer("Server=SERVER;Database=Curso;Trusted_Connection=True;Encrypt=False");
             CursoDbContext contexto = new CursoDbContext(optionsBuilder.Options);
-            var migracoesPendentes = contexto.Database.GetPendingMigrations();
-            if (migracoesPendentes.Count() > 0 )
-            {
-                contexto.Database.Migrate();
-            }
+            //var migracoesPendentes = contexto.Database.GetPendingMigrations();
+            //if (migracoesPendentes.Count() > 0 )
+            //{
+            //    contexto.Database.Migrate();
+            //}
 
             var usuario = new Usuario
             {

@@ -5,6 +5,7 @@ using curso.Api.Infra.Data.Repositories;
 using curso.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -30,6 +31,7 @@ namespace curso.Api
                                      options.SuppressModelStateInvalidFilter = true;
                                  });
 
+ 
 
 
             builder.Services.AddEndpointsApiExplorer();
@@ -64,7 +66,7 @@ namespace curso.Api
             });
 
 
-  ;
+  
             var secret = Encoding.ASCII.GetBytes(configuration.GetSection("JwTConfigurations:Secret").Value);
             builder.Services.AddAuthentication(x =>
                                 {
@@ -86,8 +88,16 @@ namespace curso.Api
 
 
 
-            builder.Services.AddDbContext<CursoDbContext>(opt =>
-               opt.UseSqlServer(configuration.GetConnectionString("connectionString")));
+            //builder.Services.AddDbContext<CursoDbContext>(opt =>
+            //   opt.UseSqlServer(configuration.GetConnectionString("connectionString")));
+
+
+            Console.WriteLine(configuration.GetConnectionString("DefaultConnection"));
+            builder.Services.AddDbContext<CursoDbContext>(options =>
+            {
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"), x => x.MigrationsAssembly(typeof(CursoDbContext).Assembly.FullName).EnableRetryOnFailure());
+            });
+
 
             builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             builder.Services.AddScoped<ICursoRepository, CursoRepository>();
@@ -109,6 +119,7 @@ namespace curso.Api
             app.UseAuthentication();
             app.UseAuthorization();
 
+     
 
             app.MapControllers();
  

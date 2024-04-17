@@ -1,5 +1,6 @@
 ﻿using curso.Api.Business.Entities;
 using curso.Api.Business.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace curso.Api.Infra.Data.Repositories
 {
@@ -22,9 +23,9 @@ namespace curso.Api.Infra.Data.Repositories
             _context.SaveChanges();
         }
 
-        public Usuario ObterUsuario(string login)
+        public async Task<Usuario> ObterUsuarioAsync(string login)
         {
-            return _context.Usuarios.FirstOrDefault(u => u.Login == login);
+            return await _context.Usuarios.FirstOrDefaultAsync(u => u.Login == login);
         }
     }
 }

@@ -4,7 +4,7 @@ namespace curso.Api.Services
 {
     public interface IAuthenticationServices
     {
-        string GerarToken(UsuarioViewModelOutPut usuarioViewModelOut);
+        string GerarToken(UsuarioViewModelOutPut usuarioViewModelOutput);
     }
 }
 

@@ -14,9 +14,11 @@ namespace curso.Api.Controllers
     public class CursoController : ControllerBase
     {
         private readonly ICursoRepository _cursoRepository;
+        private readonly ILogger<UsuarioController> _logger;
 
-        public CursoController(ICursoRepository cursoRepository)
+        public CursoController(ILogger<UsuarioController> logger, ICursoRepository cursoRepository)
         {
+            _logger = logger;
             _cursoRepository = cursoRepository;
         }
 
@@ -46,27 +48,32 @@ namespace curso.Api.Controllers
             return Created("", cursoViewModelInput);
         }
 
-        /// <summary>
-        /// Este serviço permite recuperar o cursos 
-        /// </summary>       
-        /// <returns>Retornar status 201 e dados do curso do usuário</returns>
-        [SwaggerResponse(statusCode: 201, description: "Sucesso ao obter um curso ", Type = typeof(CursoViewModelInput))]
-        [SwaggerResponse(statusCode: 401, description: "Não Autorizado")]
+
+
+        [SwaggerResponse(statusCode: 200, description: "Sucesso ao obter os cursos", Type = typeof(CursoViewModelOutPut))]
+        [SwaggerResponse(statusCode: 401, description: "Não autorizado")]
         [HttpGet]
         [Route("")]
         public async Task<IActionResult> Get()
         {
-            var codigoUsuario = int.Parse(User.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value);
+            try
+            {
+                var codigoUsuario = int.Parse(User.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value);
 
-            var cursos = _cursoRepository.ObterPorUsuario(codigoUsuario)
-                .Select(s => new CursoViewModelOutPut
-                {
-                    Login = s.Usuario.Login,
-                    Nome = s.Nome,
-                    Descricao = s.Descricao
-                });
+                var cursos = _cursoRepository.ObterPorUsuario(codigoUsuario)
+                    .Select(s => new CursoViewModelOutPut()
+                    {
+                        Nome = s.Nome,
+                        Descricao = s.Descricao
+                    });
 
-            return Ok(cursos);
+                return Ok(cursos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return new StatusCodeResult(500);
+            }
         }
     }
 }
